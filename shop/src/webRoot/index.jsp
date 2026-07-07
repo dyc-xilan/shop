@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <jsp:useBean id="client" class="lhl.hhu.ShopClientBean" scope="request" />
 <html>
 <head>
@@ -48,7 +48,18 @@
             background: #c8e6c9;
         }
         .actions { display: flex; gap: 10px; margin-top: 12px; }
-        .actions input { cursor: pointer; }
+        .actions input { flex: 1; cursor: pointer; }
+        .actions input[type="button"] {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: normal;
+        }
+        .actions input[type="button"]:hover {
+            background: #c8e6c9;
+        }
         .summary {
             margin-top: 16px;
             padding: 12px;
@@ -62,19 +73,56 @@
             font-weight: bold;
             color: #1b5e20;
         }
+        .hint {
+            color: #e65100;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        .toast {
+            display: inline-block;
+            background: #ff9800;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-top: 4px;
+            animation: toastIn 0.3s ease;
+            pointer-events: none;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
     </style>
     <script>
+        var initialLoad = true;
+        function showToast(id, msg) {
+            var old = document.getElementById(id);
+            if (old) old.remove();
+            var div = document.createElement('div');
+            div.id = id;
+            div.className = 'toast';
+            div.textContent = msg;
+            var numInput = document.getElementById('num');
+            numInput.insertAdjacentElement('afterend', div);
+        }
+        function hideToast(id) {
+            var t = document.getElementById(id);
+            if (t) t.remove();
+        }
+
         function isDigit(s) {
-            var patrn = /[0-9]{1,20}$/;
-            if (!patrn.exec(s)) {
-                alert("这里必须输入数字!");
+            if (!/^[0-9]{1,20}$/.test(s)) {
+                showToast('toast-digit', '这里必须输入数字！');
             }
         }
 
         function updatePreview() {
             var beveragePrice = 0;
             var decoratorPrice = 0;
-            var count = Number(document.getElementById('num').value || 1);
+            var rawVal = document.getElementById('num').value;
+            var count = Number(rawVal || 1);
             var beverage = document.getElementById('product').value;
             var decorator = document.getElementById('decorator').value;
 
@@ -90,8 +138,45 @@
                 decoratorPrice = 0.5;
             }
 
+            // 数字格式校验
+            var digitOk = /^[0-9]{1,20}$/.test(rawVal);
+            if (!digitOk) {
+                if (!initialLoad) {
+                    showToast('toast-digit', '这里必须输入数字！');
+                }
+            } else {
+                hideToast('toast-digit');
+            }
+
+            // 数量上限校验
+            if (digitOk && count > 5) {
+                count = 5;
+                document.getElementById('num').value = 5;
+                if (!initialLoad) {
+                    showToast('toast-limit', '配料份数不得超过5份，已自动设为5份');
+                }
+            } else {
+                hideToast('toast-limit');
+            }
+
+            if (count < 1 || isNaN(count)) {
+                count = 1;
+                document.getElementById('num').value = 1;
+            }
+
             var total = beveragePrice + decoratorPrice * count;
             document.getElementById('previewPrice').textContent = '预估总价：' + total.toFixed(2) + ' 元';
+        }
+
+        function doReset() {
+            document.getElementById('product').selectedIndex = 0;
+            document.getElementById('decorator').selectedIndex = 0;
+            document.getElementById('num').value = 1;
+            document.getElementById('previewPrice').textContent = '预估总价：0.00 元';
+            document.getElementById('currentDesc').textContent = '您还没有点饮料。';
+            document.getElementById('submittedPrice').textContent = '0.00';
+            hideToast('toast-digit');
+            hideToast('toast-limit');
         }
     </script>
 </head>
@@ -118,16 +203,16 @@
 
             <div class="actions">
                 <input type="submit" value="提交订单" />
-                <input type="reset" value="重置" />
+                <input type="button" value="重置" onclick="doReset()" />
             </div>
 
             <div class="summary">
                 <div id="previewPrice" class="price">预估总价：0.00 元</div>
-                <div>您当前选择：<jsp:getProperty name="client" property="description" /></div>
-                <div>已提交价格：<jsp:getProperty name="client" property="price" /> 元</div>
+                <div>您当前选择：<span id="currentDesc"><jsp:getProperty name="client" property="description" /></span></div>
+                <div>已提交价格：<span id="submittedPrice"><jsp:getProperty name="client" property="price" /></span> 元</div>
             </div>
         </form>
     </div>
-    <script>updatePreview();</script>
+    <script>updatePreview(); initialLoad = false;</script>
 </body>
 </html>
