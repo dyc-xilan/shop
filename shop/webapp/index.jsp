@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <title>饮品定制系统</title>
+    <title>自动生产售货机系统</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -94,6 +94,45 @@
             from { opacity: 0; transform: translateY(-6px); }
             to   { opacity: 1; transform: translateY(0); }
         }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        .modal-card {
+            background: white;
+            padding: 36px 44px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            max-width: 400px;
+            animation: popIn 0.35s ease;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.7); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        .modal-card .icon {
+            font-size: 52px;
+            margin-bottom: 10px;
+        }
+        .modal-card .msg {
+            font-size: 17px;
+            font-weight: bold;
+            color: #333;
+            line-height: 1.6;
+        }
+        .modal-card.success { border-top: 5px solid #43a047; }
+        .modal-card.error   { border-top: 5px solid #e65100; }
     </style>
     <script>
         var initialLoad = true;
@@ -182,7 +221,7 @@
 </head>
 <body>
     <div class="card">
-        <h2>饮品定制系统</h2>
+        <h2>自动生产售货机系统</h2>
         <form action="shopService" method="post">
             <label for="product">请选择饮料</label>
             <select id="product" name="product" onchange="updatePreview()">
@@ -214,5 +253,32 @@
         </form>
     </div>
     <script>updatePreview(); initialLoad = false;</script>
+    <script>
+        (function() {
+            var desc = '<jsp:getProperty name="client" property="description" />';
+            var price = parseFloat('<jsp:getProperty name="client" property="price" />') || 0;
+            if (price > 0) {
+                showModal('success', '&#10004; 点单成功！', desc);
+            } else if (desc.indexOf('缺货') >= 0 || desc.indexOf('库存不足') >= 0) {
+                showModal('error', '&#10008; 库存不足', desc);
+            }
+        })();
+
+        function showModal(type, title, detail) {
+            var overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.onclick = function(e) {
+                if (e.target === overlay) overlay.remove();
+            };
+            var card = document.createElement('div');
+            card.className = 'modal-card ' + type;
+            card.innerHTML =
+                '<div class="icon">' + (type === 'success' ? '&#127881;' : '') + '</div>' +
+                '<div class="msg">' + title + '<br>' + detail + '</div>';
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+            setTimeout(function() { overlay.remove(); }, 1500);
+        }
+    </script>
 </body>
 </html>

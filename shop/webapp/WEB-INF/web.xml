@@ -11,4 +11,12 @@
         <servlet-name>shopService</servlet-name>
         <url-pattern>/shopService</url-pattern>
     </servlet-mapping>
+    <servlet>
+        <servlet-name>adminService</servlet-name>
+        <servlet-class>lhl.hhu.AdminService</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>adminService</servlet-name>
+        <url-pattern>/adminService</url-pattern>
+    </servlet-mapping>
 </web-app>

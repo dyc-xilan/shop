@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <web-app version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee
@@ -10,5 +10,13 @@
     <servlet-mapping>
         <servlet-name>shopService</servlet-name>
         <url-pattern>/shopService</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>adminService</servlet-name>
+        <servlet-class>lhl.hhu.AdminService</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>adminService</servlet-name>
+        <url-pattern>/adminService</url-pattern>
     </servlet-mapping>
 </web-app>

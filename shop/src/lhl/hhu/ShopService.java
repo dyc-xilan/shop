@@ -56,23 +56,53 @@ public class ShopService extends HttpServlet{
                 // 获取基础饮料
                 beverage = factory.getBeverage(product);
                 description = beverage.getDescription();
-                // 合法饮料且存在配料，叠加多份配料
-                if (!(beverage instanceof NoBeverage) && !decorator.equals("") && number != 0) {
-                    beverage = deco.getDecorator(decorator, beverage);
-                    if (beverage instanceof NoDecorator) {
-                        description = beverage.getDescription();
-                    } else {
-                        description = beverage.getDescription() + " " + number + "份";
-                        // 循环叠加多份配料
-                        for (int i = 1; i < number; i++) {
-                            beverage = deco.getDecorator(decorator, beverage);
+
+                // ---- 库存检查 ----
+                InventoryManager inventory = InventoryManager.getInstance();
+                boolean outOfStock = false;
+                if (!(beverage instanceof NoBeverage)) {
+                    if (!inventory.checkStock(product)) {
+                        description = product + " 已缺货，请选择其他饮料。";
+                        outOfStock = true;
+                    }
+                    if (!outOfStock && !decorator.equals("") && !decorator.equals("milk") && !decorator.equals("ice")) {
+                        // 非法配料由 NoDecorator 处理，不检查库存
+                    }
+                    if (!outOfStock && !decorator.equals("") && (decorator.equals("milk") || decorator.equals("ice"))) {
+                        if (!inventory.checkStock(decorator, number)) {
+                            description = decorator + " 库存不足（当前库存：" + inventory.getStock().get(decorator) + "），请减少份数或选择其他配料。";
+                            outOfStock = true;
                         }
                     }
                 }
-                price = beverage.getCost();
-                // 截断提示
-                if (truncated) {
-                    description += "（提示：配料不得超过5份，已自动截断）";
+
+                if (outOfStock) {
+                    price = 0;
+                } else {
+                    // 合法饮料且存在配料，叠加多份配料
+                    if (!(beverage instanceof NoBeverage) && !decorator.equals("") && number != 0) {
+                        beverage = deco.getDecorator(decorator, beverage);
+                        if (beverage instanceof NoDecorator) {
+                            description = beverage.getDescription();
+                        } else {
+                            description = beverage.getDescription() + " " + number + "份";
+                            // 循环叠加多份配料
+                            for (int i = 1; i < number; i++) {
+                                beverage = deco.getDecorator(decorator, beverage);
+                            }
+                        }
+                    }
+                    price = beverage.getCost();
+                    // 截断提示
+                    if (truncated) {
+                        description += "（提示：配料不得超过5份，已自动截断）";
+                    }
+                    // 扣减库存并记录销量
+                    if (!(beverage instanceof NoBeverage) && !(beverage instanceof NoDecorator)) {
+                        inventory.consume(product, decorator, number);
+                    } else if (!(beverage instanceof NoBeverage) && decorator.equals("")) {
+                        inventory.consume(product, null, 0);
+                    }
                 }
                 // 数据存入模型
                 bean.setProduct(product);
