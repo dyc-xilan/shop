@@ -25,11 +25,18 @@ public class ShopService extends HttpServlet{
         BeverageFactory factory = new BeverageFactory();
         DecoratorFactory deco = new DecoratorFactory();
         //获取页面参数
-        product = request.getParameter("product").trim();
-        decorator = request.getParameter("decorator").trim();
-        num = request.getParameter("num").trim();
-        if(num != null && !num.equals(""))
+        product = request.getParameter("product");
+        decorator = request.getParameter("decorator");
+        num = request.getParameter("num");
+        if(product == null) product = "";
+        if(decorator == null) decorator = "";
+        if(num == null || num.equals("")) {
+            number = 1;
+        } else {
             number = Integer.parseInt(num);
+        }
+        product = product.trim();
+        decorator = decorator.trim();
         if(product != null && !product.equals("")){
             //获取基础饮料
             beverage = factory.getBeverage(product);
