@@ -4,27 +4,20 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 库存管理器（单例），管理饮料和配料的库存及销量。
+ * 库存管理器（单例），内存缓存 + 数据库持久化。
  */
 public class InventoryManager {
     private static InventoryManager instance = new InventoryManager();
 
-    private Map<String, Integer> stock;   // 当前库存
-    private Map<String, Integer> sold;    // 累计销量
+    private Map<String, Integer> stock;   // 当前库存（内存缓存）
+    private Map<String, Integer> sold;    // 累计销量（内存缓存）
+    private DatabaseManager db;           // 数据库管理器
 
     private InventoryManager() {
-        stock = new LinkedHashMap<String, Integer>();
-        sold  = new LinkedHashMap<String, Integer>();
-        // 初始库存
-        stock.put("coca",   20);
-        stock.put("coffee", 20);
-        stock.put("milk",   20);
-        stock.put("ice",    20);
-        // 初始销量
-        sold.put("coca",   0);
-        sold.put("coffee", 0);
-        sold.put("milk",   0);
-        sold.put("ice",    0);
+        db = DatabaseManager.getInstance();
+        // 从数据库加载库存与销量
+        stock = db.loadStock();
+        sold  = db.loadSold();
     }
 
     public static InventoryManager getInstance() {
@@ -51,24 +44,26 @@ public class InventoryManager {
         return s != null && s >= quantity;
     }
 
-    /** 扣减库存并增加销量 */
-    public void consume(String product, String decorator, int quantity) {
-        // 扣减饮料
+    /** 扣减库存并增加销量（同步写入数据库） */
+    public synchronized void consume(String product, String decorator, int quantity) {
+        // 1. 更新内存
         if (product != null && stock.containsKey(product)) {
             stock.put(product, stock.get(product) - 1);
             sold.put(product, sold.get(product) + 1);
         }
-        // 扣减配料（按份数）
         if (decorator != null && stock.containsKey(decorator)) {
             stock.put(decorator, stock.get(decorator) - quantity);
             sold.put(decorator, sold.get(decorator) + quantity);
         }
+        // 2. 同步写入数据库
+        db.consume(product, decorator, quantity);
     }
 
-    /** 补货 */
-    public void restock(String item, int amount) {
+    /** 补货（同步写入数据库） */
+    public synchronized void restock(String item, int amount) {
         if (stock.containsKey(item) && amount > 0) {
             stock.put(item, stock.get(item) + amount);
+            db.restock(item, amount);
         }
     }
 }
