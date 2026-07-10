@@ -9,13 +9,13 @@ import java.util.Map;
  * 首次启动自动创建 shop 数据库和 inventory 表。
  */
 public class DatabaseManager {
-    /* ====== 数据库连接配置 ====== */
+    //数据库连接配置
     private static final String HOST = "localhost";
     private static final int    PORT = 3306;
     private static final String USER = "root";
     private static final String PASS = "dyc041213";
     private static final String DB   = "shop";
-    /* =========================== */
+   
 
     private static DatabaseManager instance;
     private Connection conn;
@@ -26,7 +26,7 @@ public class DatabaseManager {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
 
-            // 1. 连接 MySQL（不指定数据库），自动建库
+            // 1. 连接 MySQL，自动建库
             String baseUrl = "jdbc:mysql://" + HOST + ":" + PORT
                     + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
             Connection tmp = DriverManager.getConnection(baseUrl, USER, PASS);

@@ -41,7 +41,7 @@ public class ShopService extends HttpServlet{
                     number = 1;
                 }
             }
-            // 二次校验：配料份数超过5份自动截断
+            // 二次校验：配料份数超过5份或小于1份时自动截断
             boolean truncated = false;
             if (number > 5) {
                 number = 5;
